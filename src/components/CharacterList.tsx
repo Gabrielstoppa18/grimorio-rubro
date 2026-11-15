@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { CloudUpload, Copy, Download, Plus, Trash2, Upload, User, Zap } from 'lucide-react';
+import { CloudUpload, Copy, Download, Plus, Trash2, Upload, User } from 'lucide-react';
 import type { Character } from '../types';
 import { exportCharacter, importCharacter } from '../lib/storage';
 import { maxPM, maxPV, totalLevel } from '../lib/calc';
@@ -50,7 +50,7 @@ export function CharacterList({ chars, onOpen, onCreate, onImport, onDelete, onD
       </div>
       <header className="home-hero">
         <div className="brand">
-          <Zap className="brand-bolt" size={34} strokeWidth={2.5} />
+          <img className="brand-logo" src="./logo-256.webp" alt="" width={256} height={256} />
           <div>
             <h1>Grimório Rubro</h1>
             <p>Fichas de Tormenta 20 para criar, evoluir e levar seus heróis à mesa.</p>

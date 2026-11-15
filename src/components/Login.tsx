@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Mail, Zap } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { oauthProviders, supabase } from '../lib/supabase';
 import { Divider } from './Ornaments';
 
@@ -40,12 +40,10 @@ export function Login() {
   return (
     <div className="login">
       <div className="login-card">
-        <div className="brand login-brand">
-          <Zap className="brand-bolt" size={34} strokeWidth={2.5} />
-          <div>
-            <h1>Grimório Rubro</h1>
-            <p>Fichas de Tormenta 20 para criar, evoluir e levar seus heróis à mesa.</p>
-          </div>
+        <div className="login-brand">
+          <img className="login-logo" src="./logo.webp" alt="" width={640} height={640} />
+          <h1 className="sr-only">Grimório Rubro</h1>
+          <p>Fichas de Tormenta 20 para criar, evoluir e levar seus heróis à mesa.</p>
         </div>
         <Divider />
 

@@ -789,3 +789,11 @@ select option { background: var(--iron-2); }
   .home-account { margin-top: -20px; justify-content: space-between; }
   .account-email { max-width: 150px; }
 }
+
+/* ---------- Logo ---------- */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.brand-logo { width: 96px; height: 96px; flex-shrink: 0; filter: drop-shadow(0 6px 18px rgba(180, 20, 30, 0.45)); margin: -10px -6px -10px -10px; }
+.login-brand { display: grid; justify-items: center; text-align: center; gap: 4px; }
+.login-logo { width: min(300px, 78vw); height: auto; margin: -24px 0 -16px; filter: drop-shadow(0 12px 30px rgba(180, 20, 30, 0.5)); }
+.login-brand p { margin: 0; color: var(--muted); font-style: italic; }
+@media (max-width: 600px) { .brand-logo { width: 72px; height: 72px; } }
