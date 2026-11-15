@@ -26,7 +26,7 @@ Sem configuração, o app funciona só no navegador. Para login e fichas na nuve
 3. Em **Authentication → URL Configuration**, coloque em *Site URL* o endereço do app (ex.: `https://grimorio-rubro.vercel.app`) e adicione `http://localhost:5173` em *Redirect URLs*.
 4. Copie `.env.example` para `.env.local` e preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (Project Settings → API).
 
-O login é por link no e-mail. O e-mail padrão do Supabase tem limite baixo de envios por hora; para um grupo maior, configure um SMTP próprio (Authentication → Emails) ou ative Google/Discord e use `VITE_AUTH_PROVIDERS`.
+O login é por link no e-mail e, opcionalmente, por Google ou Discord: basta ativar o provedor em **Authentication → Sign In / Providers** que o botão aparece sozinho na tela de login. O e-mail padrão do Supabase tem limite baixo de envios por hora; o login com Google evita esse limite.
 
 ## Publicando
 

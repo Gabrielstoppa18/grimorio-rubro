@@ -8,8 +8,23 @@ export const supabase = url && anonKey ? createClient(url, anonKey, { auth: { pe
 
 export const cloudEnabled = supabase !== null;
 
-/** Provedores extras de login (ex.: "google,discord"), ativados no painel do Supabase. */
-export const oauthProviders = ((import.meta.env.VITE_AUTH_PROVIDERS as string | undefined) ?? '')
-  .split(',')
-  .map((s) => s.trim().toLowerCase())
-  .filter((s): s is 'google' | 'discord' => s === 'google' || s === 'discord');
+export type OAuthProvider = 'google' | 'discord';
+const KNOWN: OAuthProvider[] = ['google', 'discord'];
+
+/**
+ * Pergunta ao Supabase quais logins sociais estão ligados no painel
+ * (Authentication → Providers). Assim o botão aparece sozinho, sem variável de ambiente.
+ */
+export async function fetchEnabledProviders(): Promise<OAuthProvider[]> {
+  if (!url || !anonKey) return [];
+  // Só em desenvolvimento: ?previa-google mostra o botão mesmo sem o provedor ligado.
+  if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('previa-google')) return ['google'];
+  try {
+    const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: anonKey } });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { external?: Record<string, boolean> };
+    return KNOWN.filter((p) => data.external?.[p]);
+  } catch {
+    return [];
+  }
+}

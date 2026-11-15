@@ -797,3 +797,15 @@ select option { background: var(--iron-2); }
 .login-logo { width: min(300px, 78vw); height: auto; margin: -24px 0 -16px; filter: drop-shadow(0 12px 30px rgba(180, 20, 30, 0.5)); }
 .login-brand p { margin: 0; color: var(--muted); font-style: italic; }
 @media (max-width: 600px) { .brand-logo { width: 72px; height: 72px; } }
+
+/* ---------- Login social ---------- */
+.login-oauth { display: grid; gap: 14px; justify-content: stretch; }
+.oauth-btn { width: 100%; text-transform: none; letter-spacing: 0.01em; font-family: var(--body); font-size: 1.08rem; font-weight: 600; gap: 12px; }
+.oauth-google {
+  background: linear-gradient(180deg, #fbf6ea, #e9dfc8); color: #1f1a14; border-color: var(--gold);
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 1px #000, 0 6px 18px -8px rgba(0, 0, 0, 0.8);
+}
+.oauth-google:hover:not(:disabled) { filter: brightness(1.05); }
+.oauth-discord { background: linear-gradient(180deg, #6b74f0, #4752c4); color: #fff; border-color: #8c93ff; }
+.login-or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-style: italic; font-size: 1rem; }
+.login-or::before, .login-or::after { content: ''; flex: 1; height: 1px; background: var(--line); }
