@@ -5,7 +5,7 @@ import type { AttrKey, Character, Spell } from '../../types';
 import { ATTRS, CIRCLE_COST, SPELL_SCHOOLS } from '../../data/rules';
 import { attr, fmt, spellCD, spellCost } from '../../lib/calc';
 import { uid } from '../../lib/storage';
-import { Empty, Field, NumInput, Panel, TextArea } from '../ui';
+import { Empty, Field, NumInput, Panel, TextArea, useReadOnly } from '../ui';
 
 const blankSpell = (circle = 1): Spell => ({
   id: uid(),
@@ -77,6 +77,7 @@ export function SpellsTab({ c, update }: { c: Character; update: Updater }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Spell | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const readOnly = useReadOnly();
   const [extra, setExtra] = useState<Record<string, number>>({});
   const [flash, setFlash] = useState<string | null>(null);
 
@@ -199,7 +200,7 @@ export function SpellsTab({ c, update }: { c: Character; update: Updater }) {
                             <span className="tag pm">{spellCost(s.circle, s.cost)} PM</span>
                           </div>
                         </div>
-                        <ChevronDown size={18} className={`chev ${expanded[s.id] ? 'open' : ''}`} />
+                        <ChevronDown size={18} className={`chev ${readOnly || expanded[s.id] ? 'open' : ''}`} />
                       </header>
                       <dl className="spell-meta">
                         {[
@@ -217,7 +218,7 @@ export function SpellsTab({ c, update }: { c: Character; update: Updater }) {
                             </div>
                           ))}
                       </dl>
-                      {s.description && <p className={`card-desc ${expanded[s.id] ? 'open' : ''}`}>{s.description}</p>}
+                      {s.description && <p className={`card-desc ${readOnly || expanded[s.id] ? 'open' : ''}`}>{s.description}</p>}
                       <footer className="card-actions">
                         <button className="btn sm use" onClick={() => cast(s)}>
                           <Wand2 size={14} /> Lançar (−{spellCost(s.circle, s.cost) + (extra[s.id] ?? 0)} PM)

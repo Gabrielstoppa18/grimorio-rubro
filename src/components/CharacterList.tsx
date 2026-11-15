@@ -6,6 +6,7 @@ import { maxPM, maxPV, totalLevel } from '../lib/calc';
 import { Modal } from './ui';
 import { Divider } from './Ornaments';
 import { AccountMenu, SyncBadge, useAccount } from './Account';
+import { HomeNav } from './Mesas';
 
 interface Props {
   chars: Character[];
@@ -68,6 +69,8 @@ export function CharacterList({ chars, onOpen, onCreate, onImport, onDelete, onD
       </header>
 
       <Divider />
+
+      {email && <HomeNav active="chars" />}
 
       {error && <div className="banner-error">{error}</div>}
 
@@ -161,7 +164,7 @@ export function CharacterList({ chars, onOpen, onCreate, onImport, onDelete, onD
       <footer className="home-foot">
         {email ? (
           <>
-            Suas fichas ficam na sua conta e também neste aparelho, para funcionar sem internet. Use <strong>Exportar</strong> para mandar uma cópia ao mestre.
+            Suas fichas ficam na sua conta e também neste aparelho, para funcionar sem internet. Para o mestre acompanhar, entre na mesa dele pela aba <strong>Mesas</strong>.
           </>
         ) : (
           <>

@@ -4,7 +4,7 @@ import type { Updater } from '../../App';
 import type { Character, Power, PowerType } from '../../types';
 import { POWER_TYPES } from '../../data/rules';
 import { uid } from '../../lib/storage';
-import { Empty, Field, NumInput, TextArea } from '../ui';
+import { Empty, Field, NumInput, TextArea, useReadOnly } from '../ui';
 
 export function PowerEditor({ value, onChange }: { value: Power; onChange: (p: Power) => void }) {
   return (
@@ -40,6 +40,7 @@ export function PowersTab({ c, update }: { c: Character; update: Updater }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Power | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const readOnly = useReadOnly();
   const [flash, setFlash] = useState<string | null>(null);
 
   const counts = useMemo(() => {
@@ -145,9 +146,9 @@ export function PowersTab({ c, update }: { c: Character; update: Updater }) {
                       {p.cost > 0 && <span className="tag pm">{p.cost} PM</span>}
                     </div>
                   </div>
-                  <ChevronDown size={18} className={`chev ${expanded[p.id] ? 'open' : ''}`} />
+                  <ChevronDown size={18} className={`chev ${readOnly || expanded[p.id] ? 'open' : ''}`} />
                 </header>
-                {p.description && <p className={`card-desc ${expanded[p.id] ? 'open' : ''}`}>{p.description}</p>}
+                {p.description && <p className={`card-desc ${readOnly || expanded[p.id] ? 'open' : ''}`}>{p.description}</p>}
                 <footer className="card-actions">
                   {p.cost > 0 && (
                     <button className="btn sm use" onClick={() => use(p)}>

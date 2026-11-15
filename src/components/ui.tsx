@@ -1,4 +1,8 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+
+/** Ficha aberta só para leitura (mestre ou colega de mesa vendo). */
+export const ReadOnlyContext = createContext(false);
+export const useReadOnly = () => useContext(ReadOnlyContext);
 import { X } from 'lucide-react';
 
 /** Campo numérico que aceita negativos e não "briga" com o usuário enquanto digita. */

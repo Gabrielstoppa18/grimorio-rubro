@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ArrowLeft, Backpack, BookOpen, Camera, ChevronsUp, Download, Flame, Pencil, Scroll, Swords, Trash2, User } from 'lucide-react';
+import { ArrowLeft, Backpack, BookOpen, Camera, ChevronsUp, Download, Eye, Flame, Pencil, Radio, Scroll, Swords, Trash2, User } from 'lucide-react';
 import type { Character } from '../types';
 import type { Updater } from '../App';
 import { defense, fmt, maxPM, maxPV, sizeMods, totalLevel } from '../lib/calc';
@@ -7,7 +7,7 @@ import { exportCharacter, resizeImage } from '../lib/storage';
 import { uploadPortrait } from '../lib/cloud';
 import { SyncBadge, useAccount } from './Account';
 import { SIZES } from '../data/rules';
-import { Field, NumInput } from './ui';
+import { Field, NumInput, ReadOnlyContext } from './ui';
 import { ResourceTracker } from './Resource';
 import { Divider, ShieldValue } from './Ornaments';
 import { CombatTab } from './tabs/CombatTab';
@@ -20,7 +20,18 @@ import { LevelUpModal } from './LevelUpModal';
 
 type Tab = 'ficha' | 'poderes' | 'magias' | 'inventario' | 'historia';
 
-export function Sheet({ c, update, onBack }: { c: Character; update: Updater; onBack: () => void }) {
+interface SheetProps {
+  c: Character;
+  update: Updater;
+  onBack: () => void;
+  /** Mestre/colega vendo a ficha: nada pode ser alterado. */
+  readOnly?: boolean;
+  backLabel?: string;
+  /** Mostra o selo "ao vivo" (atualiza sozinha quando o jogador mexe). */
+  live?: boolean;
+}
+
+export function Sheet({ c, update, onBack, readOnly = false, backLabel = 'Personagens', live = false }: SheetProps) {
   const [tab, setTab] = useState<Tab>('ficha');
   const [classesOpen, setClassesOpen] = useState(false);
   const [levelUpOpen, setLevelUpOpen] = useState(false);
@@ -71,22 +82,31 @@ export function Sheet({ c, update, onBack }: { c: Character; update: Updater; on
   ];
 
   return (
-    <div className="sheet" style={{ ['--accent' as string]: c.accent }}>
+    <ReadOnlyContext.Provider value={readOnly}>
+    <div className={`sheet ${readOnly ? 'is-readonly' : ''}`} style={{ ['--accent' as string]: c.accent }}>
       <nav className="topbar">
         <button className="btn ghost sm" onClick={onBack}>
-          <ArrowLeft size={16} /> <span className="hide-xs">Personagens</span>
+          <ArrowLeft size={16} /> <span className="hide-xs">{backLabel}</span>
         </button>
         <div className="topbar-actions">
-          <SyncBadge compact />
+          {readOnly && (
+            <span className="ro-badge" title="Só o dono da ficha pode alterá-la">
+              {live ? <Radio size={14} /> : <Eye size={14} />} <span className="hide-xs">{live ? 'Ao vivo · só leitura' : 'Só leitura'}</span>
+            </span>
+          )}
+          {!readOnly && <SyncBadge compact />}
           <button className="btn ghost sm" onClick={() => exportCharacter(c)} title="Baixar arquivo da ficha">
             <Download size={16} /> <span className="hide-sm">Exportar</span>
           </button>
-          <button className="btn primary sm" onClick={() => setLevelUpOpen(true)}>
-            <ChevronsUp size={16} /> Subir<span className="hide-xs"> de nível</span>
-          </button>
+          {!readOnly && (
+            <button className="btn primary sm" onClick={() => setLevelUpOpen(true)}>
+              <ChevronsUp size={16} /> Subir<span className="hide-xs"> de nível</span>
+            </button>
+          )}
         </div>
       </nav>
 
+      <fieldset className="ro" disabled={readOnly}>
       <header className="hero">
         <div className="portrait-wrap">
           <button className="portrait" onClick={() => photoRef.current?.click()} title="Trocar foto">
@@ -149,6 +169,7 @@ export function Sheet({ c, update, onBack }: { c: Character; update: Updater; on
           <ShieldValue value={def} label="Defesa" />
         </div>
       </header>
+      </fieldset>
 
       <Divider />
 
@@ -162,6 +183,7 @@ export function Sheet({ c, update, onBack }: { c: Character; update: Updater; on
         ))}
       </div>
 
+      <fieldset className="ro" disabled={readOnly}>
       <main className="tab-body">
         {tab === 'ficha' && <CombatTab c={c} update={update} />}
         {tab === 'poderes' && <PowersTab c={c} update={update} />}
@@ -169,9 +191,11 @@ export function Sheet({ c, update, onBack }: { c: Character; update: Updater; on
         {tab === 'inventario' && <InventoryTab c={c} update={update} />}
         {tab === 'historia' && <NotesTab c={c} update={update} />}
       </main>
+      </fieldset>
 
       {classesOpen && <ClassesModal c={c} update={update} onClose={() => setClassesOpen(false)} />}
       {levelUpOpen && <LevelUpModal c={c} update={update} onClose={() => setLevelUpOpen(false)} />}
     </div>
+    </ReadOnlyContext.Provider>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Mail } from 'lucide-react';
+import { Mail, Users } from 'lucide-react';
 import { fetchEnabledProviders, supabase, type OAuthProvider } from '../lib/supabase';
 import { Divider } from './Ornaments';
 
@@ -16,7 +16,7 @@ function GoogleIcon() {
   );
 }
 
-export function Login() {
+export function Login({ invited = false }: { invited?: boolean }) {
   const [email, setEmail] = useState('');
   const [state, setState] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [error, setError] = useState('');
@@ -77,6 +77,12 @@ export function Login() {
           <p>Fichas de Tormenta 20 para criar, evoluir e levar seus heróis à mesa.</p>
         </div>
         <Divider />
+
+        {invited && state !== 'sent' && (
+          <div className="login-invite">
+            <Users size={18} /> Você recebeu um convite para uma mesa. Entre para escolher sua ficha.
+          </div>
+        )}
 
         {state === 'sent' ? (
           <div className="login-sent">

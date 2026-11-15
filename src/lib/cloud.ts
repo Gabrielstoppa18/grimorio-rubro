@@ -42,8 +42,13 @@ function db() {
   return supabase;
 }
 
-export async function fetchRemote(): Promise<Character[]> {
-  const { data, error } = await db().from(TABLE).select('id, name, data, updated_at').order('updated_at', { ascending: false });
+/** Só as fichas do próprio usuário (as das mesas também são visíveis, mas não entram na lista dele). */
+export async function fetchRemote(userId: string): Promise<Character[]> {
+  const { data, error } = await db()
+    .from(TABLE)
+    .select('id, name, data, updated_at')
+    .eq('owner_id', userId)
+    .order('updated_at', { ascending: false });
   if (error) throw error;
   return (data as Row[]).map((r) => ({ ...normalize(r.data), id: r.id }));
 }

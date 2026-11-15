@@ -8,10 +8,43 @@ import { CharacterList } from './components/CharacterList';
 import { Sheet } from './components/Sheet';
 import { Login } from './components/Login';
 import { AccountContext, type SyncStatus } from './components/Account';
+import { InvitePage, MesaPage, MesaSheet, MesasPage } from './components/Mesas';
 
-const routeId = () => {
-  const m = window.location.hash.match(/^#\/ficha\/(.+)$/);
-  return m ? decodeURIComponent(m[1]) : null;
+type Route =
+  | { kind: 'list' }
+  | { kind: 'sheet'; id: string }
+  | { kind: 'mesas' }
+  | { kind: 'mesa'; id: string }
+  | { kind: 'mesaSheet'; mesaId: string; charId: string }
+  | { kind: 'convite'; code: string };
+
+function parseRoute(): Route {
+  const h = window.location.hash;
+  let m: RegExpMatchArray | null;
+  if ((m = h.match(/^#\/ficha\/(.+)$/))) return { kind: 'sheet', id: decodeURIComponent(m[1]) };
+  if ((m = h.match(/^#\/mesa\/([^/]+)\/ficha\/(.+)$/))) return { kind: 'mesaSheet', mesaId: m[1], charId: decodeURIComponent(m[2]) };
+  if ((m = h.match(/^#\/mesa\/([^/]+)$/))) return { kind: 'mesa', id: m[1] };
+  if (h === '#/mesas') return { kind: 'mesas' };
+  if ((m = h.match(/^#\/convite\/([A-Za-z0-9]+)/))) return { kind: 'convite', code: m[1].toUpperCase() };
+  return { kind: 'list' };
+}
+
+/** Convite aberto antes do login: guardado para continuar depois de entrar. */
+const INVITE_KEY = 'grimorio:convite';
+const storedInvite = () => {
+  try {
+    return localStorage.getItem(INVITE_KEY);
+  } catch {
+    return null;
+  }
+};
+const setStoredInvite = (code: string | null) => {
+  try {
+    if (code) localStorage.setItem(INVITE_KEY, code);
+    else localStorage.removeItem(INVITE_KEY);
+  } catch {
+    /* sem armazenamento: o convite só não sobrevive ao login */
+  }
 };
 
 export type Updater = (fn: (draft: Character) => void) => void;
@@ -31,18 +64,32 @@ export default function App() {
   }, []);
 
   if (!ready) return <div className="splash">Abrindo o grimório…</div>;
-  if (cloudEnabled && !session) return <Login />;
+  if (cloudEnabled && !session) {
+    const r = parseRoute();
+    if (r.kind === 'convite') setStoredInvite(r.code);
+    return <Login invited={r.kind === 'convite' || !!storedInvite()} />;
+  }
 
   const userId = session?.user.id ?? null;
-  return <Workspace key={userId ?? 'local'} userId={userId} email={session?.user.email ?? null} />;
+  const meta = session?.user.user_metadata ?? {};
+  const displayName = String(meta.full_name || meta.name || '').trim();
+  return <Workspace key={userId ?? 'local'} userId={userId} email={session?.user.email ?? null} displayName={displayName} />;
 }
 
 const RETRY_MS = 15000;
 
-function Workspace({ userId, email }: { userId: string | null; email: string | null }) {
+function Workspace({ userId, email, displayName }: { userId: string | null; email: string | null; displayName: string }) {
   const storageKey = userId ? userCacheKey(userId) : LOCAL_KEY;
   const [chars, setChars] = useState<Character[]>(() => loadAll(storageKey));
-  const [currentId, setCurrentId] = useState<string | null>(routeId);
+  const [route, setRoute] = useState<Route>(() => {
+    // Voltou do login com um convite pendente: continua de onde parou.
+    const pendingInvite = userId ? storedInvite() : null;
+    if (pendingInvite && parseRoute().kind !== 'convite') {
+      window.location.hash = `#/convite/${pendingInvite}`;
+      return { kind: 'convite', code: pendingInvite };
+    }
+    return parseRoute();
+  });
   const [saveError, setSaveError] = useState(false);
   const [status, setStatus] = useState<SyncStatus>(userId ? 'syncing' : 'local');
   const [loaded, setLoaded] = useState(!userId);
@@ -55,7 +102,7 @@ function Workspace({ userId, email }: { userId: string | null; email: string | n
   const flushing = useRef(false);
 
   useEffect(() => {
-    const onHash = () => setCurrentId(routeId());
+    const onHash = () => setRoute(parseRoute());
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
@@ -146,7 +193,7 @@ function Workspace({ userId, email }: { userId: string | null; email: string | n
   useEffect(() => {
     if (!userId) return;
     let alive = true;
-    fetchRemote()
+    fetchRemote(userId)
       .then((remote) => {
         if (!alive) return;
         setChars(merge(remote, charsRef.current, pending.current));
@@ -174,12 +221,14 @@ function Workspace({ userId, email }: { userId: string | null; email: string | n
     window.scrollTo(0, 0);
   };
 
-  const create = () => {
+  const createBlank = () => {
     const c = newCharacter();
     setChars((l) => [c, ...l]);
     markDirty(c.id);
-    open(c.id);
+    return c;
   };
+
+  const create = () => open(createBlank().id);
 
   const add = (c: Character) => {
     setChars((l) => [c, ...l]);
@@ -258,7 +307,12 @@ function Workspace({ userId, email }: { userId: string | null; email: string | n
     await supabase.auth.signOut();
   };
 
-  const current = currentId ? chars.find((c) => c.id === currentId) : undefined;
+  useEffect(() => {
+    if (route.kind === 'convite') setStoredInvite(null);
+  }, [route]);
+
+  const current = route.kind === 'sheet' ? chars.find((c) => c.id === route.id) : undefined;
+  const cloudRoute = userId && (route.kind === 'mesas' || route.kind === 'mesa' || route.kind === 'mesaSheet' || route.kind === 'convite');
 
   return (
     <AccountContext.Provider value={{ status, email, signOut: userId ? () => void signOut() : null, releasePhoto }}>
@@ -267,7 +321,17 @@ function Workspace({ userId, email }: { userId: string | null; email: string | n
           Não foi possível salvar no navegador (talvez a memória local esteja cheia). Exporte suas fichas para não perder nada.
         </div>
       )}
-      {current ? (
+      {cloudRoute && userId ? (
+        route.kind === 'mesas' ? (
+          <MesasPage userId={userId} chars={chars} defaultGmName={displayName} />
+        ) : route.kind === 'mesa' ? (
+          <MesaPage key={route.id} mesaId={route.id} userId={userId} />
+        ) : route.kind === 'mesaSheet' ? (
+          <MesaSheet key={route.charId} mesaId={route.mesaId} charId={route.charId} />
+        ) : route.kind === 'convite' ? (
+          <InvitePage key={route.code} code={route.code} chars={chars} onCreate={createBlank} />
+        ) : null
+      ) : current ? (
         <Sheet key={current.id} c={current} update={update(current.id)} onBack={() => open(null)} />
       ) : (
         <CharacterList
